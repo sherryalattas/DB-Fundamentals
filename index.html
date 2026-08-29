@@ -99,11 +99,11 @@
     </div>
   </div>
 
-  <!-- Standard Plain JS Scripts -->
-  <script src="js/data.js"></script>
-  <script src="js/sql-engine.js"></script>
+  <!-- Dual-path Script Imports (Supports both Root & /js/ directory uploads) -->
+  <script src="data.js" onerror="this.onerror=null;this.src='js/data.js';"></script>
+  <script src="sql-engine.js" onerror="this.onerror=null;this.src='js/sql-engine.js';"></script>
 
-  <!-- Inline Babel Script for guaranteed file:/// execution without CORS XHR block -->
+  <!-- Inline Babel Script for guaranteed GitHub Pages & local execution -->
   <script type="text/babel">
     const { useState, useEffect } = React;
 
