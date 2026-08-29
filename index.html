@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DB FUNDAMENTALS HUB KKPG | Belajar • Bina • Query • Semak</title>
+  <meta name="description" content="Platform Pembelajaran Digital Database Fundamentals khas untuk Pelajar Sijil Teknologi Maklumat, Kolej Komuniti Pasir Gudang.">
+  
+  <!-- Fonts: Outfit, Inter & Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              950: '#060B18',
+              900: '#0B132B',
+              800: '#1C2541',
+              700: '#2A365C',
+              600: '#3D4C7D',
+            },
+            electric: {
+              400: '#60A5FA',
+              500: '#3A86EF',
+              600: '#2563EB',
+              700: '#1D4ED8',
+            },
+            gold: {
+              400: '#FFE082',
+              500: '#FFD166',
+              600: '#F4A261',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif'],
+            mono: ['Fira Code', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18, ReactDOM 18, Babel Standalone -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- AlaSQL for Client-side MySQL Query Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
+
+  <!-- Canvas Confetti for Gamification Celebrations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0B132B;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2A365C;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3A86EF;
+    }
+    .glass-card {
+      background: rgba(28, 37, 65, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-electric {
+      box-shadow: 0 0 25px rgba(58, 134, 239, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-navy-950 text-slate-100 font-sans min-h-screen selection:bg-electric-500 selection:text-white overflow-x-hidden">
+  <div id="root">
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="text-center p-8 glass-card rounded-2xl max-w-md">
+        <div class="w-16 h-16 border-4 border-electric-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <h2 class="text-xl font-bold font-heading text-white mb-2">DB FUNDAMENTALS HUB KKPG</h2>
+        <p class="text-slate-400 text-xs">Memuatkan platform pembelajaran digital...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Standard Plain JS Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/sql-engine.js"></script>
+
+  <!-- Inline Babel Script for guaranteed file:/// execution without CORS XHR block -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [currentUser, setCurrentUser] = useState(() => {
+        return AppStore.get('current_user', {
+          id: "STM2026001",
+          name: "Ahmad Zaki Bin Rosli",
+          role: "student",
+          class: "STM1A",
+          programme: "Sijil Teknologi Maklumat",
+          institution: "Kolej Komuniti Pasir Gudang",
+          xp: 420,
+          confidence: "Sederhana",
+          unlockedBadges: ["b1", "b3"]
+        });
+      });
+
+      const [activeTab, setActiveTab] = useState('landing');
+      const [activeModuleId, setActiveModuleId] = useState('mod-1');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [showSearchModal, setShowSearchModal] = useState(false);
+      const [toastMessage, setToastMessage] = useState(null);
+
+      useEffect(() => {
+        AppStore.set('current_user', currentUser);
+      }, [currentUser]);
+
+      const showToast = (msg, type = 'info') => {
+        setToastMessage({ msg, type });
+        setTimeout(() => setToastMessage(null), 3500);
+      };
+
+      const addXP = (amount, reason) => {
+        setCurrentUser(prev => {
+          const newXP = prev.xp + amount;
+          showToast(`+${amount} XP! (${reason})`, 'success');
+          if (window.confetti) {
+            window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 } });
+          }
+          return { ...prev, xp: newXP };
+        });
+      };
+
+      const toggleRole = () => {
+        const nextRole = currentUser.role === 'student' ? 'teacher' : 'student';
+        setCurrentUser(prev => ({
+          ...prev,
+          role: nextRole,
+          name: nextRole === 'teacher' ? 'En. Razak Bin Mohd (Pensyarah)' : 'Ahmad Zaki Bin Rosli'
+        }));
+        setActiveTab(nextRole === 'teacher' ? 'teacher-dashboard' : 'student-dashboard');
+        showToast(`Peranan ditukar kepada: ${nextRole === 'teacher' ? 'PENSYARAH / ADMIN' : 'PELAJAR'}`);
+      };
+
+      return (
+        <div className="min-h-screen bg-navy-950 text-slate-100 flex flex-col font-sans selection:bg-electric-500 selection:text-white">
+          {toastMessage && (
+            <div className="fixed top-5 right-5 z-50 transition-all transform animate-bounce">
+              <div className={`px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${
+                toastMessage.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-emerald-200' :
+                toastMessage.type === 'warning' ? 'bg-amber-900/90 border-amber-500 text-amber-200' :
+                'bg-electric-900/90 border-electric-500 text-electric-200'
+              }`}>
+                <span className="font-semibold text-xs">{toastMessage.msg}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Top Navbar */}
+          <header className="bg-navy-900/80 backdrop-blur-md border-b border-navy-800 sticky top-0 z-40 px-4 lg:px-8 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('landing')}>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-electric-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg glow-electric">
+                DB
+              </div>
+              <div>
+                <h1 className="font-heading font-extrabold text-base lg:text-lg text-white tracking-wide flex items-center gap-2">
+                  DB FUNDAMENTALS HUB
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-electric-500/20 text-electric-400 font-mono border border-electric-500/30">KKPG</span>
+                </h1>
+                <p className="text-[10px] text-slate-400 font-medium">Belajar • Bina • Query • Semak</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setShowSearchModal(true)}
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-navy-800/80 border border-navy-700 text-slate-400 text-xs hover:text-white transition"
+              >
+                <span>Cari modul, SQL command, ralat...</span>
+              </button>
+
+              {currentUser.role === 'student' && (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-400 text-xs font-semibold font-mono">
+                  <span>⚡ {currentUser.xp} XP</span>
+                </div>
+              )}
+
+              <button 
+                onClick={toggleRole}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition ${
+                  currentUser.role === 'teacher' 
+                    ? 'bg-purple-900/40 border-purple-500/50 text-purple-300 hover:bg-purple-800/50' 
+                    : 'bg-electric-900/40 border-electric-500/50 text-electric-300 hover:bg-electric-800/50'
+                }`}
+              >
+                <span>Peranan: {currentUser.role === 'teacher' ? 'PENSYARAH' : 'PELAJAR'}</span>
+                <span className="text-[10px] opacity-75">(Tukar)</span>
+              </button>
+
+              <div className="flex items-center gap-2 pl-2 border-l border-navy-800">
+                <div className="w-8 h-8 rounded-full bg-navy-700 flex items-center justify-center text-xs font-bold text-electric-400 border border-navy-600">
+                  {currentUser.name.charAt(0)}
+                </div>
+                <div className="hidden sm:block text-left text-xs">
+                  <div className="font-semibold text-slate-200 leading-none">{currentUser.name.split(' ')[0]}</div>
+                  <div className="text-[10px] text-slate-400">{currentUser.class}</div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Body Layout */}
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <aside className="w-full md:w-64 bg-navy-900/60 border-r border-navy-800/80 p-4 flex flex-col gap-5 shrink-0 overflow-y-auto max-h-screen">
+              {currentUser.role === 'student' ? (
+                <>
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Pembelajaran Utama</div>
+                    <nav className="space-y-1">
+                      <SidebarLink active={activeTab === 'student-dashboard'} onClick={() => setActiveTab('student-dashboard')} label="Dashboard Pelajar" />
+                      <SidebarLink active={activeTab === 'modules'} onClick={() => setActiveTab('modules')} label="Modul Database (13)" badge="Utama" />
+                      <SidebarLink active={activeTab === 'workbench-lab'} onClick={() => setActiveTab('workbench-lab')} label="MySQL Workbench Lab" badge="Simulasi" />
+                      <SidebarLink active={activeTab === 'sql-playground'} onClick={() => setActiveTab('sql-playground')} label="SQL Playground" badge="IDE" />
+                      <SidebarLink active={activeTab === 'command-library'} onClick={() => setActiveTab('command-library')} label="SQL Command Library" />
+                    </nav>
+                  </div>
+
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Alatan Interaktif & Lab</div>
+                    <nav className="space-y-1">
+                      <SidebarLink active={activeTab === 'concept-visualizer'} onClick={() => setActiveTab('concept-visualizer')} label="Concept Visualizer" />
+                      <SidebarLink active={activeTab === 'erd-builder'} onClick={() => setActiveTab('erd-builder')} label="ERD Builder Canvas" />
+                      <SidebarLink active={activeTab === 'pk-fk-lab'} onClick={() => setActiveTab('pk-fk-lab')} label="PK & FK Lab" />
+                      <SidebarLink active={activeTab === 'create-table-builder'} onClick={() => setActiveTab('create-table-builder')} label="Create Table Builder" />
+                      <SidebarLink active={activeTab === 'data-type-lab'} onClick={() => setActiveTab('data-type-lab')} label="Data Type Lab" />
+                      <SidebarLink active={activeTab === 'insert-data-lab'} onClick={() => setActiveTab('insert-data-lab')} label="Insert Data Lab" />
+                      <SidebarLink active={activeTab === 'select-trainer'} onClick={() => setActiveTab('select-trainer')} label="SELECT Query Trainer" badge="25 Lvl" />
+                      <SidebarLink active={activeTab === 'update-delete-safety'} onClick={() => setActiveTab('update-delete-safety')} label="UPDATE/DELETE Safety" />
+                      <SidebarLink active={activeTab === 'aggregate-lab'} onClick={() => setActiveTab('aggregate-lab')} label="Aggregate Function Lab" />
+                      <SidebarLink active={activeTab === 'join-visualizer'} onClick={() => setActiveTab('join-visualizer')} label="JOIN Visualizer" />
+                      <SidebarLink active={activeTab === 'normalization-lab'} onClick={() => setActiveTab('normalization-lab')} label="Normalization Lab" />
+                      <SidebarLink active={activeTab === 'error-clinic'} onClick={() => setActiveTab('error-clinic')} label="SQL Error Clinic" badge="Troubleshoot" />
+                    </nav>
+                  </div>
+
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Amali & Projek</div>
+                    <nav className="space-y-1">
+                      <SidebarLink active={activeTab === 'practical-labs'} onClick={() => setActiveTab('practical-labs')} label="Practical Database Labs" />
+                      <SidebarLink active={activeTab === 'mini-projects'} onClick={() => setActiveTab('mini-projects')} label="Mini Project Builder" />
+                      <SidebarLink active={activeTab === 'ai-tutor'} onClick={() => setActiveTab('ai-tutor')} label="AI Database Tutor" badge="Coach" />
+                      <SidebarLink active={activeTab === 'my-work'} onClick={() => setActiveTab('my-work')} label="Hasil Kerja Saya" />
+                      <SidebarLink active={activeTab === 'achievements'} onClick={() => setActiveTab('achievements')} label="Pencapaian & Badge" />
+                    </nav>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider mb-2 px-2">Pengurusan Pensyarah</div>
+                    <nav className="space-y-1">
+                      <SidebarLink active={activeTab === 'teacher-dashboard'} onClick={() => setActiveTab('teacher-dashboard')} label="Dashboard Analitik" />
+                      <SidebarLink active={activeTab === 'teacher-students'} onClick={() => setActiveTab('teacher-students')} label="Pengurusan Pelajar" />
+                      <SidebarLink active={activeTab === 'teacher-classes'} onClick={() => setActiveTab('teacher-classes')} label="Pengurusan Kelas" />
+                      <SidebarLink active={activeTab === 'teacher-cms'} onClick={() => setActiveTab('teacher-cms')} label="Pengurusan Modul & Quiz" />
+                      <SidebarLink active={activeTab === 'teacher-assignments'} onClick={() => setActiveTab('teacher-assignments')} label="Tugasan & Amali" />
+                      <SidebarLink active={activeTab === 'teacher-reviews'} onClick={() => setActiveTab('teacher-reviews')} label="Semakan & Rubrik" badge="Grading" />
+                      <SidebarLink active={activeTab === 'teacher-reports'} onClick={() => setActiveTab('teacher-reports')} label="Laporan & Exporter" />
+                    </nav>
+                  </div>
+                </>
+              )}
+            </aside>
+
+            <main className="flex-1 p-4 lg:p-8 overflow-y-auto bg-navy-950/90">
+              {activeTab === 'landing' && <LandingPageView onStart={() => setActiveTab('onboarding')} onExplore={() => setActiveTab('modules')} />}
+              {activeTab === 'onboarding' && <OnboardingView currentUser={currentUser} onComplete={(info) => {
+                setCurrentUser(prev => ({ ...prev, ...info }));
+                setActiveTab('student-dashboard');
+                showToast('Pendaftaran berjaya! Selamat datang ke DB Hub KKPG.');
+              }} />}
+              {activeTab === 'student-dashboard' && <StudentDashboardView currentUser={currentUser} onSelectTab={setActiveTab} onSelectModule={(id) => { setActiveModuleId(id); setActiveTab('modules'); }} />}
+              {activeTab === 'modules' && <ModulesView activeModuleId={activeModuleId} onSelectModule={setActiveModuleId} addXP={addXP} />}
+              {activeTab === 'workbench-lab' && <WorkbenchLabView addXP={addXP} />}
+              {activeTab === 'sql-playground' && <SQLPlaygroundView addXP={addXP} />}
+              {activeTab === 'command-library' && <CommandLibraryView onTryInPlayground={() => setActiveTab('sql-playground')} />}
+              {activeTab === 'concept-visualizer' && <ConceptVisualizerView />}
+              {activeTab === 'erd-builder' && <ERDBuilderView addXP={addXP} />}
+              {activeTab === 'pk-fk-lab' && <PKFKLabView addXP={addXP} />}
+              {activeTab === 'create-table-builder' && <CreateTableBuilderView onOpenPlayground={() => setActiveTab('sql-playground')} />}
+              {activeTab === 'data-type-lab' && <DataTypeLabView addXP={addXP} />}
+              {activeTab === 'insert-data-lab' && <InsertDataLabView addXP={addXP} />}
+              {activeTab === 'select-trainer' && <SelectTrainerView addXP={addXP} />}
+              {activeTab === 'update-delete-safety' && <UpdateDeleteSafetyView addXP={addXP} />}
+              {activeTab === 'aggregate-lab' && <AggregateLabView addXP={addXP} />}
+              {activeTab === 'join-visualizer' && <JOINVisualizerView />}
+              {activeTab === 'normalization-lab' && <NormalizationLabView addXP={addXP} />}
+              {activeTab === 'error-clinic' && <ErrorClinicView addXP={addXP} />}
+              {activeTab === 'ai-tutor' && <AITutorView />}
+              {activeTab === 'practical-labs' && <PracticalLabsView addXP={addXP} />}
+              {activeTab === 'mini-projects' && <MiniProjectsView addXP={addXP} />}
+              {activeTab === 'my-work' && <MyWorkView />}
+              {activeTab === 'achievements' && <AchievementsView currentUser={currentUser} />}
+              {activeTab === 'teacher-dashboard' && <TeacherDashboardView />}
+              {activeTab.startsWith('teacher-') && activeTab !== 'teacher-dashboard' && <TeacherCMSView activeSubTab={activeTab} />}
+            </main>
+          </div>
+
+          {showSearchModal && (
+            <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-20 p-4">
+              <div className="bg-navy-900 border border-navy-700 rounded-2xl w-full max-w-xl shadow-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white">Carian Pantas Platform</h3>
+                  <button onClick={() => setShowSearchModal(false)} className="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Cari modul, SQL command, ralat..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-navy-950 border border-navy-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-electric-500 mb-4"
+                  autoFocus
+                />
+                <div className="max-h-60 overflow-y-auto space-y-2">
+                  {window.INITIAL_DATA.modules.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
+                    <div key={m.id} onClick={() => { setActiveModuleId(m.id); setActiveTab('modules'); setShowSearchModal(false); }} className="p-3 bg-navy-800/60 rounded-xl hover:bg-electric-900/40 cursor-pointer border border-navy-700">
+                      <div className="font-semibold text-xs text-electric-300">{m.code}: {m.title}</div>
+                      <div className="text-[11px] text-slate-400">{m.description}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function SidebarLink({ active, onClick, label, badge }) {
+      return (
+        <button 
+          onClick={onClick}
+          className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-all ${
+            active 
+              ? 'bg-gradient-to-r from-electric-600 to-electric-700 text-white shadow-lg glow-electric' 
+              : 'text-slate-300 hover:bg-navy-800/80 hover:text-white'
+          }`}
+        >
+          <span>{label}</span>
+          {badge && (
+            <span className={`text-[9px] px-2 py-0.5 rounded-full font-mono ${
+              active ? 'bg-white/20 text-white' : 'bg-navy-800 text-electric-400 border border-navy-700'
+            }`}>
+              {badge}
+            </span>
+          )}
+        </button>
+      );
+    }
+
+    function LandingPageView({ onStart, onExplore }) {
+      return (
+        <div className="max-w-6xl mx-auto space-y-16 py-6">
+          <div className="text-center space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-electric-500/10 border border-electric-500/30 text-electric-400 text-xs font-semibold">
+              <span>Kolej Komuniti Pasir Gudang • Sijil Teknologi Maklumat</span>
+            </div>
+            <h1 className="text-4xl lg:text-6xl font-extrabold font-heading text-white tracking-tight leading-tight">
+              Belajar Database Dengan <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric-400 via-blue-300 to-gold-400">
+                Langkah Yang Betul
+              </span>
+            </h1>
+            <p className="text-slate-300 max-w-2xl mx-auto text-sm lg:text-base">
+              Daripada memahami konsep database, membina table, menulis SQL query sehingga menghasilkan mini database project.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+              <button onClick={onStart} className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-electric-500 to-electric-700 font-bold text-white shadow-xl glow-electric text-xs">
+                MULA BELAJAR SEKARANG
+              </button>
+              <button onClick={onExplore} className="px-8 py-3.5 rounded-2xl glass-card font-bold text-slate-200 border border-navy-700 text-xs">
+                LIHAT MODUL PEMBELAJARAN
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: "Modul Pembelajaran", val: "13 Modul", sub: "Scaffolding I DO / WE DO / YOU DO" },
+              { label: "SQL Exercises", val: "25 Latihan", sub: "Disemak automatik oleh engine" },
+              { label: "Database Labs", val: "6 Amali", sub: "Standard MySQL Workbench" },
+              { label: "Mini Projects", val: "6 Senario", sub: "Dunia Sebenar STM KKPG" }
+            ].map((s, idx) => (
+              <div key={idx} className="glass-card p-6 rounded-2xl text-center border border-navy-800">
+                <div className="text-2xl lg:text-3xl font-extrabold font-heading text-electric-400 mb-1">{s.val}</div>
+                <div className="text-xs font-bold text-white mb-1">{s.label}</div>
+                <div className="text-[11px] text-slate-400">{s.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-2xl lg:text-3xl font-bold font-heading text-white">KENAPA PLATFORM INI?</h2>
+            </div>
+            <div className="grid md:grid-cols-4 gap-6">
+              {[
+                { title: "1. Belajar Langkah Demi Langkah", desc: "Pendekatan scaffolding membimbing dari asas entiti sehingga normalisasi 3NF." },
+                { title: "2. Praktik SQL Interaktif", desc: "Taip arahan SQL sebenar dan lihat hasil jadual Result Grid secara langsung." },
+                { title: "3. Simulasi Workbench", desc: "Kenali MySQL Workbench secara amali tanpa halangan konfigurasi pelayan." },
+                { title: "4. AI Database Tutor", desc: "Tutor pintar yang membimbing menggunakan soalan Socratic tanpa memberi jawapan terus." }
+              ].map((item, i) => (
+                <div key={i} className="glass-card p-6 rounded-2xl border border-navy-800 space-y-3">
+                  <div className="font-bold text-electric-400 font-heading text-base">{item.title}</div>
+                  <p className="text-xs text-slate-300 leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function OnboardingView({ currentUser, onComplete }) {
+      const [formData, setFormData] = useState({ name: currentUser.name || '', studentId: currentUser.id || 'STM2026001', class: 'STM1A' });
+      return (
+        <div className="max-w-2xl mx-auto glass-card p-8 rounded-3xl border border-navy-800 space-y-6">
+          <h2 className="text-2xl font-bold font-heading text-white text-center">Pendaftaran Pelajar DB Hub KKPG</h2>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Nama Penuh</label>
+              <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-navy-950 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white" />
+            </div>
+          </div>
+          <button onClick={() => onComplete(formData)} className="w-full py-3 rounded-xl bg-electric-600 text-white font-bold text-xs">MASUK DASHBOARD</button>
+        </div>
+      );
+    }
+
+    function StudentDashboardView({ currentUser, onSelectTab, onSelectModule }) {
+      return (
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="glass-card p-8 rounded-3xl border border-navy-800 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <span className="px-3 py-1 rounded-full bg-electric-500/10 text-electric-400 text-xs font-semibold border border-electric-500/30">Pelajar STM KKPG</span>
+              <h1 className="text-2xl font-extrabold font-heading text-white mt-2">Selamat Datang, {currentUser.name}!</h1>
+            </div>
+            <button onClick={() => onSelectModule('mod-1')} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-electric-500 to-electric-700 font-bold text-white text-xs shadow-xl glow-electric">SAMBUNG PEMBELAJARAN</button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="glass-card p-5 rounded-2xl border border-navy-800"><div className="text-xs text-slate-400">KEMAJUAN</div><div className="text-3xl font-bold text-electric-400">68%</div></div>
+            <div className="glass-card p-5 rounded-2xl border border-navy-800"><div className="text-xs text-slate-400">MODUL</div><div className="text-3xl font-bold text-gold-400">7 / 13</div></div>
+            <div className="glass-card p-5 rounded-2xl border border-navy-800"><div className="text-xs text-slate-400">EXERCISES</div><div className="text-3xl font-bold text-emerald-400">18 / 25</div></div>
+            <div className="glass-card p-5 rounded-2xl border border-navy-800"><div className="text-xs text-slate-400">LABS</div><div className="text-3xl font-bold text-purple-400">4 / 6</div></div>
+          </div>
+        </div>
+      );
+    }
+
+    function ModulesView({ activeModuleId, onSelectModule, addXP }) {
+      const modules = window.INITIAL_DATA.modules;
+      const currentMod = modules.find(m => m.id === activeModuleId) || modules[0];
+      const [subTab, setSubTab] = useState('ido');
+      return (
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="glass-card p-4 rounded-2xl border border-navy-800 flex gap-2 overflow-x-auto">
+            {modules.map(m => (
+              <button key={m.id} onClick={() => onSelectModule(m.id)} className={`px-3 py-2 rounded-xl text-xs font-semibold shrink-0 ${m.id === currentMod.id ? 'bg-electric-600 text-white' : 'bg-navy-950 text-slate-400'}`}>{m.code}</button>
+            ))}
+          </div>
+          <div className="glass-card p-8 rounded-3xl border border-navy-800 space-y-6">
+            <h1 className="text-2xl font-bold font-heading text-white">{currentMod.code}: {currentMod.title}</h1>
+            <p className="text-xs text-slate-300">{currentMod.description}</p>
+            <div className="p-6 bg-navy-950 rounded-2xl border border-navy-800 text-xs text-slate-300 space-y-2">
+              <div className="font-bold text-electric-400">KONSEP UTAMA (I DO):</div>
+              <p>{currentMod.ido.concept}</p>
+            </div>
+            <button onClick={() => addXP(20, `Melengkapkan ${currentMod.code}`)} className="px-5 py-2.5 bg-emerald-600 rounded-xl font-bold text-xs text-white">TANDA SELESAI (+20 XP)</button>
+          </div>
+        </div>
+      );
+    }
+
+    function WorkbenchLabView({ addXP }) {
+      const steps = window.INITIAL_DATA.workbenchSteps;
+      const [idx, setIdx] = useState(0);
+      const [sql, setSql] = useState(steps[0].sql);
+      const [res, setRes] = useState(null);
+      const st = steps[idx];
+      return (
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="glass-card p-6 rounded-3xl border border-navy-800 flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-white font-heading">🖥️ MYSQL WORKBENCH LAB</h1>
+            <div className="text-xs text-electric-400 font-mono">LANGKAH {idx + 1} / 14</div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="glass-card p-4 rounded-2xl space-y-2 border border-navy-800">
+              {steps.map((s, i) => (
+                <div key={i} onClick={() => { setIdx(i); setSql(s.sql); setRes(null); }} className={`p-3 rounded-xl cursor-pointer text-xs ${i === idx ? 'bg-electric-600 text-white' : 'bg-navy-950 text-slate-400'}`}>STEP {s.step}: {s.title}</div>
+              ))}
+            </div>
+            <div className="md:col-span-2 glass-card p-6 rounded-2xl space-y-4 border border-navy-800">
+              <h3 className="text-base font-bold text-electric-300">{st.title}</h3>
+              <p className="text-xs text-slate-300">{st.desc}</p>
+              <textarea rows={4} value={sql} onChange={e => setSql(e.target.value)} className="w-full bg-navy-950 border border-navy-700 rounded-xl p-3 font-mono text-xs text-electric-200" />
+              <button onClick={() => setRes(window.SQLEngine.execute(sql))} className="px-4 py-2 bg-electric-600 rounded-xl font-bold text-xs text-white">⚡ EXECUTE QUERY</button>
+              {res && <div className="p-3 bg-navy-950 rounded-xl font-mono text-xs text-emerald-300">{res.message || res.error}</div>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function SQLPlaygroundView({ addXP }) {
+      const [sql, setSql] = useState("SELECT * FROM pelajar;");
+      const [res, setRes] = useState(null);
+      return (
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="glass-card p-6 rounded-3xl border border-navy-800">
+            <h1 className="text-2xl font-bold font-heading text-white">💻 SQL PLAYGROUND IDE</h1>
+          </div>
+          <div className="glass-card p-6 rounded-2xl space-y-4 border border-navy-800">
+            <textarea rows={5} value={sql} onChange={e => setSql(e.target.value)} className="w-full bg-navy-950 border border-navy-700 rounded-xl p-4 font-mono text-xs text-electric-200" />
+            <button onClick={() => { setRes(window.SQLEngine.execute(sql)); addXP(10, 'Run SQL Query'); }} className="px-6 py-2.5 bg-electric-600 rounded-xl font-bold text-xs text-white">▶ RUN QUERY</button>
+            {res && (
+              <div className="space-y-3">
+                <div className={`p-3 rounded-xl font-mono text-xs ${res.success ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}`}>{res.message || res.error}</div>
+                {res.rows && res.rows.length > 0 && (
+                  <div className="overflow-x-auto border border-navy-800 rounded-xl">
+                    <table className="w-full text-left font-mono text-xs">
+                      <thead><tr className="bg-navy-900 text-electric-300">{res.columns.map(c => <th key={c} className="p-2">{c}</th>)}</tr></thead>
+                      <tbody>{res.rows.map((r, i) => <tr key={i} className="border-b border-navy-800">{res.columns.map(c => <td key={c} className="p-2 text-slate-300">{String(r[c])}</td>)}</tr>)}</tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function CommandLibraryView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">📖 Command Library Active</div>; }
+    function ConceptVisualizerView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">👁️ Concept Visualizer Active</div>; }
+    function ERDBuilderView({ addXP }) { return <div className="p-8 glass-card rounded-3xl text-center text-white">🔗 ERD Builder Active</div>; }
+    function PKFKLabView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">🔑 PK & FK Lab Active</div>; }
+    function CreateTableBuilderView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">🏗️ Create Table Builder Active</div>; }
+    function DataTypeLabView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">🔢 Data Type Lab Active</div>; }
+    function InsertDataLabView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">➕ Insert Data Lab Active</div>; }
+    function SelectTrainerView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">✨ SELECT Trainer Active</div>; }
+    function UpdateDeleteSafetyView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">🛡️ UPDATE/DELETE Safety Active</div>; }
+    function AggregateLabView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">🧮 Aggregate Lab Active</div>; }
+    function JOINVisualizerView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">𔔀 JOIN Visualizer Active</div>; }
+    function NormalizationLabView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">📐 Normalization Lab Active</div>; }
+    function ErrorClinicView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">🚑 Error Clinic Active</div>; }
+    function AITutorView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">🤖 AI Database Tutor Active</div>; }
+    function PracticalLabsView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">🧪 Practical Labs Active</div>; }
+    function MiniProjectsView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">📁 Mini Projects Active</div>; }
+    function MyWorkView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">📂 Hasil Kerja Saya Active</div>; }
+    function AchievementsView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">🏅 Pencapaian & Badge Active</div>; }
+    function TeacherDashboardView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">⚙️ Teacher Dashboard Active</div>; }
+    function TeacherCMSView() { return <div className="p-8 glass-card rounded-3xl text-center text-white">⚙️ Teacher CMS Active</div>; }
+
+    const rootEl = document.getElementById('root');
+    if (rootEl) {
+      const root = ReactDOM.createRoot(rootEl);
+      root.render(<App />);
+    }
+  </script>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (window.lucide) window.lucide.createIcons();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
